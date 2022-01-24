@@ -10,14 +10,14 @@ Noise generators written in Common Lisp
 Clone and navigate to the repository:
 
 ```console
-$ git clone https://github.com/jakergrossman/noise.git
-$ cd noise
+$ git clone https://github.com/jakergrossman/lnoise.git
+$ cd lnoise
 ```
 
 Build with specified BUILD_DIR (default `bin'):
 
 ```console
-$ BUILD_DIR=foo ./build.sh  # build binaries in `foo'
+$ BUILD_DIR="/path/to/build/location" ./build.sh  # build binaries in `foo'
 ```
 
 Install with specified PREFIX (default `/usr/local/bin'):
@@ -106,7 +106,7 @@ $ lperlin -s 6 | column -t
 - 256x256 uniform truecolor to "image.png":
 
 ```console
-$ lnoise -s 256 -c truecolor -o "image.png"
+$ lnoise-png -s 256 -c truecolor -o "image.png"
 ```
 
 ![1024x1024 grayscale uniform noise](media/example1.png)
@@ -114,7 +114,7 @@ $ lnoise -s 256 -c truecolor -o "image.png"
 - 256x256 perlin grayscale, 3 octaves to "image.png":
 
 ```console
-$ lperlin -s 256 --octaves 3 -o "image.png"
+$ lperlin-png -s 256 --octaves 3 -o "image.png"
 ```
 
 ![512x512 truecolor perlin noise, 2 octaves](media/example2.png)

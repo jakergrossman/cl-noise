@@ -1,47 +1,46 @@
-(in-package :noise)
+(in-package :noise.image)
 
 (setf *random-state* (make-random-state t))
 
-(opts:define-opts
- (:name :help
-        :description "Print this help text"
-        :short #\h
-        :long "help")
- (:name :size
-        :description "The side length of the generated image"
-        :short #\s
-        :long "size"
-        :arg-parser #'parse-integer)
- (:name :output
-        :description "Name of the output PNG file"
-        :short #\o
-        :long "output-file"
-        :default #P"output.png"
-        :arg-parser #'pathname)
- (:name :generator
-        :description (with-output-to-string (str)
-                       (format str "Which generator to use to generate noise~%")
-                       (format str " One of [~{`~a'~^, ~}]" '(:uniform :perlin)))
-        :short #\g
-        :long "generator"
-        :default :uniform
-        :arg-parser (lambda (x) (read-from-string (format nil ":~a" x))))
- (:name :color-type
-        :description (with-output-to-string (str)
-                       (format str "The color type to use~%")
-                       (format str " One of [~{`~a'~^, ~}]" '(:grayscale :truecolor)))
-        :short #\c
-        :long "color-type"
-        :default :grayscale
-        :arg-parser (lambda (x) (read-from-string (format nil ":~a" x))))
- (:name :octaves
-        :description "Number of octaves to use for perlin noise"
-        :long "octaves"
-        :arg-parser #'parse-integer)
- (:name :persistence
-        :description "Weight of each perlin octave relative to the last"
-        :long "persistence"
-        :arg-parser #'read-from-string))
+(defparameter *current-program* nil
+  "Name of the currently running program")
+
+(defparameter *common-options*
+  '((:name :help
+           :description "Print this help text"
+           :short #\h
+           :long "help")
+    (:name :size
+           :description "The side length of the generated image"
+           :short #\s
+           :long "size"
+           :arg-parser #'parse-integer)
+    (:name :output
+           :description "Name of the output PNG file"
+           :short #\o
+           :long "output-file"
+           :default #P"output.png")
+    (:name :color-type
+           :description (with-output-to-string (str)
+                                               (format str "The color type to use~%")
+                                               (format str " One of [~{`~a'~^, ~}]"
+                                                       '(:grayscale :truecolor)))
+           :short #\c
+           :long "color-type"
+           :default :grayscale
+           :arg-parser (lambda (x) (read-from-string (format nil ":~a" x)))))
+  "Options common to all executables")
+
+(defparameter *options*
+  '(("lperlin" . ((:name :octaves
+                         :description "Number of octaves to use for perlin noise"
+                         :long "octaves"
+                         :arg-parser #'parse-integer)
+                  (:name :persistence
+                         :description "Weight of each octave relative to the last"
+                         :long "persistence"
+                         :arg-parser #'read-from-string))))
+  "alist for options specific to each executable")
 
 (defun run (output size generator color-type &optional octaves persistence)
   (format t "Generating PNG `~a'~%" output)
@@ -49,7 +48,7 @@
   (format t "  Generator: ~a~%" generator)
   (format t "  Color Type: ~a~%" color-type)
   (ecase generator
-         (:uniform (noise.image:uniform-png output
+         (:uniform (uniform-png output
                                             :size size
                                             :color-type color-type))
          (:perlin
@@ -57,7 +56,7 @@
                                            (:persistence persistence))
             (format t "  Octaves: ~a~%" octaves)
             (format t "  Persistence: ~a~%" persistence)
-            (noise.image:perlin-png output
+            (perlin-png output
                                             :size size
                                             :octaves octaves
                                             :persistence persistence
@@ -66,11 +65,8 @@
 
 (defun usage ()
   (opts:describe
-   :prefix (with-output-to-string (str)
-                                  (format str "Usage: noise [-h] [--size SIZE] [--output-file OUTPUT]~%") 
-                                  (format str "             [--generator GENERATOR] [--color-type COLOR-TYPE]~%")
-                                  (format str "             [--octaves OCTAVES] [--persistence PERSISTENCE]~%"))
-   :args "[keywords]"))
+   :prefix (format nil "Usage: ~a OPTIONS" *current-program*)))
+
 
 (defun check-options (options)
   (cond
@@ -78,15 +74,11 @@
     (usage)
     (sb-ext:exit :code 0))
    ((not (getf options :size))
-    (print "No size specified!" *error-output*)
-    (usage)
-    (sb-ext:exit :code 1))
-   ((not (member (getf options :generator) '(:uniform :perlin)))
-    (print "Unknown generator specified!" *error-output*)
+    (format *error-output* "No size specified!~%")
     (usage)
     (sb-ext:exit :code 1))
    ((not (member (getf options :color-type) '(:grayscale :truecolor)))
-    (print "Unknown color specifier!" *error-output*)
+    (format *error-output* "Unknown color specifier!~%")
     (usage)
     (sb-ext:exit :code 1))
    ((and (getf options :octaves)
@@ -99,14 +91,41 @@
     (format *error-output* "Persistence must be a float in the range (0 1]. (~a)~%"
             (getf options :octaves)))))
 
+(defun toplevel-luniform ()
+  (setf *current-program* "luniform")
+  (let* ((additional-opts (assoc *current-program* *options*))
+         (opts (append *common-options* (cdr additional-opts))))
+    (eval (macroexpand `(opts:define-opts ,@opts)))
+    (multiple-value-bind (options) (opts:get-opts)
+                         (check-options options)
+                         (run (getf options :output)
+                              (getf options :size)
+                              :uniform
+                              (getf options :color-type)))))
+
+(defun toplevel-lperlin ()
+  (setf *current-program* "lperlin")
+  (let* ((additional-opts (assoc *current-program* *options*))
+         (opts (append *common-options* (cdr additional-opts))))
+    (eval (macroexpand `(opts:define-opts ,@opts)))
+    (multiple-value-bind (options) (opts:get-opts)
+                         (check-options options)
+                         (run (getf options :output)
+                              (getf options :size)
+                              :perlin
+                              (getf options :color-type)
+                              (getf options :octaves)
+                              (getf options :persistence)))))
 
 (defun toplevel ()
-  (multiple-value-bind (options) (opts:get-opts)
-    (check-options options)
-    (run (getf options :output)
-         (getf options :size)
-         (getf options :generator)
-         (getf options :color-type)
-         (getf options :octaves)
-         (getf options :persistence))))
-
+  "Redirect to appropriate procedure based on the passed noise generator"
+  (let* ((args (opts:argv))
+         (proc (and args (> (length args) 1) (second args))))
+    (cond
+     ((string= proc "lperlin")
+      (toplevel-lperlin))
+     ((string= proc "luniform")
+      (toplevel-luniform))
+     (t (format *error-output*
+                "lnoise multi-executable called with invalid executable `~a'~%"
+                proc)))))

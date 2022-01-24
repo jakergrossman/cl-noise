@@ -1,4 +1,4 @@
-;;;; NOISE system definition
+;;;; LxNOISE system definition
 
 (in-package :asdf-user)
 
@@ -7,18 +7,22 @@
   :author "Jake Grossman <jake.r.grossman@gmail.com>"
   :license "Unlicense"
   :description "Noise generators"
-  :depends-on ("zpng")
+  :depends-on ("alexandria")
+  :pathname "src"
   :serial t
-  :pathname "src"
   :components ((:file "packages")
-               (:file "gen")
-               (:file "image")))
+               (:file "gen")))
 
-               
-(defsystem #:noise/binary
+(defsystem #:noise/png
+  :depends-on ("noise" "unix-opts" "zpng")
   :build-operation program-op
-  :build-pathname "noise"
-  :entry-point "noise:toplevel"
-  :pathname "src"
-  :depends-on ("noise" "unix-opts")
-  :components ((:file "noise")))
+  :build-pathname "bin/lnoise-png"
+  :entry-point "noise.image:toplevel"
+  :components ((:file "src/image")))
+
+(defsystem #:noise/txt
+  :depends-on ("noise" "unix-opts" "alexandria")
+  :build-operation program-op
+  :build-pathname "bin/lnoise"
+  :entry-point "noise.text:toplevel"
+  :components ((:file "src/text")))

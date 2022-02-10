@@ -4,25 +4,52 @@
 
 (in-package :cl-user)
 
-;;;; entry point
+(eval-when (:execute)
+  (setq *read-default-float-format* 'long-float))
 
-(uiop:define-package #:noise
-  (:use :cl)
-  (:export :toplevel))
+(uiop:define-package #:cl-noise.gen.uniform
+    (:use :cl)
+  (:export
+   :uniform))
 
-(uiop:define-package #:noise.gen
-  (:use :cl)
-  (:export :uniform
-           :uniform-perm
-           :perlin
-           :perlin-generator
-           :perlin-buffer
-           :with-perlin-defaults))
+(uiop:define-package #:cl-noise.gen.perlin
+    (:use :cl)
+  (:export
+   :perlin
+   :+ken-perlin-perm+))
 
-(uiop:define-package #:noise.image
-  (:use :cl)
-  (:export :toplevel))
+(uiop:define-package #:cl-noise.gen.simplex
+    (:use :cl)
+  (:export :simplex)
+  (:import-from :cl-noise.gen.perlin
+                +ken-perlin-perm+))
 
-(uiop:define-package #:noise.text
-  (:use :cl)
-  (:export :toplevel))
+(uiop:define-package #:cl-noise.gen
+    (:use :cl)
+  (:use-reexport
+   :cl-noise.gen.uniform
+   :cl-noise.gen.perlin
+   :cl-noise.gen.simplex))
+
+(uiop:define-package #:cl-noise
+    (:use :cl)
+  (:export
+   :noise
+   :dimensions
+   :uniform-perm
+
+   :make-noise-desc
+   :noise-desc
+   :noise-desc-generator
+   :noise-desc-size
+   :noise-desc-octaves
+   :noise-desc-persistence
+   :noise-desc-frequency-scale
+   :noise-desc-sample-width
+   :noise-desc-offset
+
+   :make-buffer
+   :make-generator
+
+   :with-buffer
+   :with-generator))

@@ -59,7 +59,7 @@ base 10 numbers"
    :short #\s
    :long "size"
    :default (lambda () (list 3 3))
-   :meta-var "ROWS[,COLUMNS]"
+   :meta-var "ROWS,COLUMNS"
    :arg-parser #'parse-size-string)
 
   (:name :octaves

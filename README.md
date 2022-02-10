@@ -120,39 +120,81 @@ by default.
 To build examples:
 
 ```console
-$ ./build-sh EXAMPLE
-$ ./build-sh png      # build png example
+$ ./build.sh $EXAMPLE
+$ ./build.sh png       # build png example
 ```
 
 ### png
-Create PNGs of grayscale or truecolor RGB noise.
+Create a PNG of 2 dimensional noise.
 
 ```
 Usage: png OPTIONS FILE [FILE ...]
 Available options:
-  -h, --help            Print this help text
-  -s, --size ARG        The side length of the generated image [Default: 128]
-  -c, --color-type ARG  The color type to use
-                        One of [`GRAYSCALE', `TRUECOLOR'] [Default: GRAYSCALE]
-  -o, --octaves ARG     Number of octaves to use for perlin noise [Default: 1]
-  -p, --persistence ARG Weight of each octave relative to the last [Default: 0.5]
-  -w, --width ARG       Noise sample size [Default: 8.0]
-  -g, --generator ARG   Specifies the noise generation function
-                        One of [`UNIFORM', `PERLIN', `SIMPLEX'] [Default: perlin]
+  -h, --help                Print this help text
+  -s, --size ROWS,COLUMNS
+                            The size of the noise as a comma-separated list in row-major order [Default: (3 3)]
+  -o, --octaves ARG         Number of octaves to use for perlin noise [Default: 1]
+  -p, --persistence ARG     Weight of each octave relative to the last [Default: 0.5]
+  -w, --sample-width ARG    Noise sample size [Default: 8.0]
+  -g, --generator ARG       Specifies the noise generation function
+                            One of [`UNIFORM', `PERLIN', `SIMPLEX'] [Default: perlin]
+  -k, --ken-perlin-perm     Whether to use Ken Perlins original permutation
+  --offset Y[,X]            Offset of first noise data point from origin [Default: (0 0)]
 ```
 
-- 256x256 uniform truecolor to "image.png":
+- 256x256 uniform noise to "image.png":
 
 ```console
-$ ./png -g uniform -s 256 -c truecolor "image.png"
+$ ./png -g uniform --size 256,256 "image.png"
 ```
 
-![1024x1024 grayscale uniform noise](media/example1.png)
+![256x256 image of grayscale uniform noise](media/256_uniform.png)
 
 - 256x256 perlin grayscale, 3 octaves to "image.png":
 
 ```console
-$ ./png -g perlin --size 256 --octaves 3 "image.png"
+$ ./png -g perlin --size 256,256 --octaves 3 "image.png"
 ```
 
-![256x256 truecolor perlin noise, 2 octaves](media/example2.png)
+![256x256 image og grayscale perlin noise, 3 octaves](media/256_perlin.png)
+
+### text
+Output 1 or 2 dimensional noise as text to standard out.
+
+```
+Usage: text OPTIONS [FILE ...]
+Available options:
+  -h, --help                Print this help text
+  -s, --size ROWS[,COLUMNS] The size of the noise as a comma-separated list in row-major order
+                            [Default: (3 3)]
+  -o, --octaves ARG         Number of octaves to use for perlin noise [Default: 1]
+  -p, --persistence ARG     Weight of each octave relative to the last [Default: 0.5]
+  -w, --sample-width ARG    Noise sample size [Default: 8.0]
+  -g, --generator ARG       Specifies the noise generation function
+                            One of [`UNIFORM', `PERLIN', `SIMPLEX'] [Default: perlin]
+  -k, --ken-perlin-perm     Whether to use Ken Perlins original permutation
+  --offset Y[,X]            Offset of first noise data point from origin [Default: (0 0)]
+```
+
+- 4 values of uniform noise:
+
+```console
+$ ./text --size 4 -g uniform
+```
+
+```
+0.7695440824515019 -0.7537826533967542 0.6109767621066111 0.4594674938062311
+```
+
+- 4x4 values of simplex noise offset to (5,5) using the Ken Perlin permutation:
+
+```console
+$ ./text --size 4,4 --offset 5,5 -g simplex -k | column -t
+```
+
+```
+0.33723438   0.6889363        0.2889931    0.6488647
+0.49733528   0.2889949        -0.3244326   -0.6220379
+0.5779881    0.0000005150496  0.49821177   0.07493882
+-0.32443157  -0.4982115       -0.03746941  -0.13081408
+```
